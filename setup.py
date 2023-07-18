@@ -14,6 +14,9 @@ class build_npm(Command, SubCommand):
     yarn_projects: list[str]
     """A list of project paths to be built with `yarn build` and installed."""
 
+    yarn_dist_dir = "dist"
+    """The distribution directory that all yarn projects output to."""
+
     # SubCommand protocol
 
     def initialize_options(self) -> None:
@@ -60,7 +63,7 @@ class build_npm(Command, SubCommand):
                 for output_path in output_dir.iterdir():
                     if not output_path.is_dir():
                         output_path.unlink()
-                    elif output_path.name != "dist":
+                    elif output_path.name != self.yarn_dist_dir:
                         shutil.rmtree(output_path)
 
     def get_source_files(self) -> list[str]:
@@ -89,7 +92,7 @@ class build_npm(Command, SubCommand):
         """
         files = []
         for path_str in self.yarn_projects:
-            output_path = self._get_output_path(path_str) / "dist"
+            output_path = self._get_output_path(path_str) / self.yarn_dist_dir
             assert output_path.is_dir(), f"failed to build {path_str}"
 
             for file in output_path.rglob("*"):
