@@ -27,6 +27,12 @@ make sure you have [Node.js] and [Yarn] installed:
 pip install git+https://github.com/sardine-system/sardine-web
 ```
 
+## Usage
+
+Documentation: https://sardine.raphaelforment.fr/editors/fishery.html
+
+This adds a `sardine web` command to Sardine to start the web editor.
+
 [sardine-system]: https://github.com/Bubobubobubobubo/sardine
 [PyPI]: https://pypi.org/project/sardine-web/
 [installation guide]: https://sardine.raphaelforment.fr/installation.html
