@@ -67,9 +67,6 @@ version = { attr = "sardine_web.__version__" }
 profile = "black"
 skip_gitignore = true
 
-[project.scripts]
-sardine = 'sardine.__main__:main'
-
 [tool.black]
 target_version = ['py311']
 include = '\.pyi?$'
