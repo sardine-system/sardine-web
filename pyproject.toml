@@ -46,7 +46,7 @@ dependencies = [
     "sardine-system>=0.4.0",
 ]
 
-[project.entry-points.sardine-cli-main-hooks]
+[project.entry-points."sardine.cli_main_hooks"]
 install_web = "sardine_web:install_web"
 
 [project.optional-dependencies]
