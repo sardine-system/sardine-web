@@ -1,3 +1,4 @@
+graft sardine_web/client
 prune **/__pycache__
 prune **/dist
 prune **/node_modules
