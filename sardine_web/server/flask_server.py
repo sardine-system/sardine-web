@@ -243,7 +243,3 @@ def server_factory(console):
         return files
 
     return app
-
-
-if __name__ == "__main__":
-    server_factory().run(debug=False)
