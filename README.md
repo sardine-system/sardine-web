@@ -1,6 +1,6 @@
 # sardine-web
 
-The official web editor plugin for the [sardine-system] algorave module!
+The official web editor plugin for the [sardine-system] library!
 
 ## Installation
 
