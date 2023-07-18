@@ -56,6 +56,13 @@ class build_npm(Command, SubCommand):
             subprocess.check_call(f'"{npx}" yarn install', **kwargs)
             subprocess.check_call(f'"{npx}" yarn run build', **kwargs)
 
+            if not self.editable_mode:
+                for output_path in output_dir.iterdir():
+                    if not output_path.is_dir():
+                        output_path.unlink()
+                    elif output_path.name != "dist":
+                        shutil.rmtree(output_path)
+
     def get_source_files(self) -> list[str]:
         """
         Return a list of all files that are used by the command to create
