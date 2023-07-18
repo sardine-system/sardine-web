@@ -4,8 +4,8 @@ The official web editor plugin for the [sardine-system] library!
 
 ## Installation
 
-If you already have sardine-system v0.4.0+ installed or you aren't interested
-in the development version of Sardine, you can go straight to installing
+If you already have sardine-system v0.4.0+ installed or you are fine with
+the stable version of Sardine, you can go straight to installing
 this package from [PyPI]:
 
 ```sh
