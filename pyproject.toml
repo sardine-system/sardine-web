@@ -18,8 +18,8 @@ requires-python = ">=3.10"
 keywords = ["algorave", "live-coding", "music", "patterns"]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Framework :: AsyncIO",
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Flask",
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved",
