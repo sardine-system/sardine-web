@@ -88,7 +88,7 @@ class WebServer:
                         f.write("")
                     buffer_files[filename] = f"{filename}"
                     return buffer_files
-            except FileExistsError or OSError:
+            except OSError:
                 print("[red]Fishery was not able to create web editor files![/red]")
                 exit()
         # If it already exists, read files from the folder
