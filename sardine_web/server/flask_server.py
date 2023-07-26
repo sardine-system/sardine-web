@@ -1,3 +1,4 @@
+import json
 import logging
 import mimetypes
 import os
@@ -7,7 +8,6 @@ import webbrowser
 from pathlib import Path
 from threading import Thread
 from typing import Optional
-import json
 
 from appdirs import user_data_dir
 from flask import (
