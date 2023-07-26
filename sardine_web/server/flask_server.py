@@ -84,15 +84,16 @@ class WebServer:
         buffer_files: dict[str, str] = {}
 
         # Creating the folder to store text files if it doesn't exist
-        if not (USER_DIR / "buffers").is_dir():
+        buffer_folder = USER_DIR / "buffers"
+        if not buffer_folder.is_dir():
             try:
-                (USER_DIR / "buffers").mkdir()
+                buffer_folder.mkdir()
                 for filename in FILENAMES:
-                    print(f"Creating file {filename}.py.")
-                    with open(filename, "w", encoding="utf-8") as f:
-                        f.write("")
-                    buffer_files[filename] = f"{filename}"
-                    return buffer_files
+                    print(f"Creating {filename}")
+                    buffer_file = buffer_folder / filename
+                    buffer_file.touch()
+                    buffer_files[filename] = filename
+                return buffer_files
             except OSError:
                 print("[red]Fishery was not able to create web editor files![/red]")
                 exit()
