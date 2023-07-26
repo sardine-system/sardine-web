@@ -9,7 +9,7 @@ from threading import Thread
 from typing import Optional
 import json
 
-from appdirs import *
+from appdirs import user_data_dir
 from flask import (
     Flask,
     Response,
