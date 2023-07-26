@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import mimetypes
@@ -62,7 +63,8 @@ class WebServer:
     def reset_log_file(self) -> None:
         """Reset the log file on application start. Writing to the file
         and immediately closing is effectively erasing the content."""
-        open(LOG_FILE, "w", encoding="utf-8").close()
+        with contextlib.suppress(FileNotFoundError):
+            os.truncate(LOG_FILE, 0)
 
     def check_buffer_files(self) -> None:
         """This function will check the integrity of the buffer folder."""
