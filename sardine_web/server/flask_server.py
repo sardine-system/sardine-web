@@ -116,7 +116,11 @@ class WebServer:
         )
 
     def start_in_thread(self, console):
-        Thread(target=self.start, args=(console,)).start()
+        # FIXME: daemon=True is not a good idea because we can't perform
+        #        any cleanup, however the alternative is users having to
+        #        SIGKILL the hanging process which is no better.
+        #        This webserver should be re-written to run as a subprocess.
+        Thread(target=self.start, args=(console,), daemon=True).start()
 
     def open_in_browser(self):
         address = f"http://{self.host}:{self.port}"
