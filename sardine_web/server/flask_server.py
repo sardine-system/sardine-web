@@ -145,6 +145,7 @@ def server_factory(console):
                 return "OK"
         except Exception as e:
             print(e)
+        finally:
             return "FAILED"
 
     @app.post("/open_folder")
@@ -166,7 +167,7 @@ def server_factory(console):
 
     @app.post("/execute")
     def execute():
-        code = request.json["code"]
+        code = request.json["code"]  # type: ignore
         try:
             # If `code` contains multiple statements, an exception occurs but
             # code.InteractiveInterpreter.runsource swallows it.
@@ -184,6 +185,7 @@ def server_factory(console):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve(path):
+        assert app.static_folder is not None
         if path != "" and os.path.exists(app.static_folder + "/" + path):
             return send_from_directory(app.static_folder, path)
         else:
