@@ -66,14 +66,10 @@ class WebServer:
 
     def check_buffer_files(self) -> None:
         """This function will check the integrity of the buffer folder."""
-        buffer_folder: Path = Path(USER_DIR / "buffers")
+        buffer_folder = USER_DIR / "buffers"
         for filename in FILENAMES:
-            check_file: Path = buffer_folder / filename
-            if not check_file.exists():
-                with open(check_file, "w", encoding="utf-8") as f:
-                    f.write("")
-            else:
-                pass
+            buffer_file = buffer_folder / filename
+            buffer_file.touch()
 
     def load_buffer_files(self) -> dict[str, str] | None:
         """
