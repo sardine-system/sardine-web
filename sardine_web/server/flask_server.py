@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import contextlib
+import json
 import logging
 import mimetypes
 import os
@@ -6,10 +10,9 @@ import subprocess
 import webbrowser
 from pathlib import Path
 from threading import Thread
-from typing import Optional
-import json
+from typing import TYPE_CHECKING, Any
 
-from appdirs import *
+from appdirs import user_data_dir
 from flask import (
     Flask,
     Response,
@@ -20,6 +23,9 @@ from flask import (
 from flask_cors import CORS
 from pygtail import Pygtail
 from rich import print
+
+if TYPE_CHECKING:
+    from sardine.console import AsyncIOInteractiveConsole
 
 # Monkey-patching to prevent some initial printing
 # More info can be found here: https://gist.github.com/daryltucker/e40c59a267ea75db12b1
@@ -49,46 +55,44 @@ class WebServer:
     iguration folder under the buffers/folder.
     """
 
-    def __init__(self, host="localhost", port=8000):
+    def __init__(self, host: str = "localhost", port: int = 8000):
         self.host, self.port = host, port
         self.reset_log_file()
         self.local_files = self.load_buffer_files()
 
-    def reset_log_file(self):
+    def reset_log_file(self) -> None:
         """Reset the log file on application start. Writing to the file
         and immediately closing is effectively erasing the content."""
-        open(LOG_FILE, "w", encoding="utf-8").close()
+        with contextlib.suppress(FileNotFoundError):
+            os.truncate(LOG_FILE, 0)
 
     def check_buffer_files(self) -> None:
         """This function will check the integrity of the buffer folder."""
-        buffer_folder: Path = Path(USER_DIR / "buffers")
+        buffer_folder = USER_DIR / "buffers"
         for filename in FILENAMES:
-            check_file: Path = buffer_folder / filename
-            if not check_file.exists():
-                with open(check_file, "w", encoding="utf-8") as f:
-                    f.write("")
-            else:
-                pass
+            buffer_file = buffer_folder / filename
+            buffer_file.touch()
 
-    def load_buffer_files(self) -> Optional[dict]:
+    def load_buffer_files(self) -> dict[str, str] | None:
         """
         Loading buffer files from a local folder. If the folder doesn't exist, this
         function will automatically create it and load empty files for the first round.
         If the folder exists, read files in their current state
         """
-        buffer_files: dict = {}
+        buffer_files: dict[str, str] = {}
 
         # Creating the folder to store text files if it doesn't exist
-        if not (USER_DIR / "buffers").is_dir():
+        buffer_folder = USER_DIR / "buffers"
+        if not buffer_folder.is_dir():
             try:
-                (USER_DIR / "buffers").mkdir()
+                buffer_folder.mkdir()
                 for filename in FILENAMES:
-                    print(f"Creating file {filename}.py.")
-                    with open(filename, "w", encoding="utf-8") as f:
-                        f.write("")
-                    buffer_files[filename] = f"{filename}"
-                    return buffer_files
-            except FileExistsError or OSError:
+                    print(f"Creating {filename}")
+                    buffer_file = buffer_folder / filename
+                    buffer_file.touch()
+                    buffer_files[filename] = filename
+                return buffer_files
+            except OSError:
                 print("[red]Fishery was not able to create web editor files![/red]")
                 exit()
         # If it already exists, read files from the folder
@@ -104,7 +108,7 @@ class WebServer:
                     buffer_files[file] = buffer.read()
             return buffer_files
 
-    def start(self, console):
+    def start(self, console: AsyncIOInteractiveConsole) -> None:
         app = server_factory(console)
 
         # Start the application
@@ -115,8 +119,12 @@ class WebServer:
             debug=False,
         )
 
-    def start_in_thread(self, console):
-        Thread(target=self.start, args=(console,)).start()
+    def start_in_thread(self, console: AsyncIOInteractiveConsole) -> None:
+        # FIXME: daemon=True is not a good idea because we can't perform
+        #        any cleanup, however the alternative is users having to
+        #        SIGKILL the hanging process which is no better.
+        #        This webserver should be re-written to run as a subprocess.
+        Thread(target=self.start, args=(console,), daemon=True).start()
 
     def open_in_browser(self):
         address = f"http://{self.host}:{self.port}"
@@ -124,7 +132,7 @@ class WebServer:
         webbrowser.open(address)
 
 
-def server_factory(console):
+def server_factory(console: AsyncIOInteractiveConsole) -> Flask:
     app = Flask(__name__, static_folder="../client/dist")
     app.logger.disabled = True  # Disable some of the logging
     CORS(app, resources={r"/*": {"origins": "*"}})
@@ -145,19 +153,20 @@ def server_factory(console):
                 return "OK"
         except Exception as e:
             print(e)
+        finally:
             return "FAILED"
 
     @app.post("/open_folder")
-    def open_folder():
+    def open_folder() -> str:
         """Open Sardine Default Folder using the default file Explorer"""
 
-        def showFileExplorer(file):  # Path to file (string)
+        def showFileExplorer(path: str) -> None:
             if platform.system() == "Windows":
-                os.startfile(file)
+                os.startfile(path)
             elif platform.system() == "Darwin":
-                subprocess.call(["open", "-R", file])
+                subprocess.call(["open", "-R", path])
             else:
-                subprocess.Popen(["xdg-open", file])
+                subprocess.Popen(["xdg-open", path])
 
         # Open the file explorer
         showFileExplorer(str(USER_DIR))
@@ -165,8 +174,8 @@ def server_factory(console):
         return "OK"
 
     @app.post("/execute")
-    def execute():
-        code = request.json["code"]
+    def execute() -> dict[str, Any]:
+        code: str = request.json["code"]  # type: ignore
         try:
             # If `code` contains multiple statements, an exception occurs but
             # code.InteractiveInterpreter.runsource swallows it.
@@ -183,14 +192,15 @@ def server_factory(console):
     # Serve App
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
-    def serve(path):
+    def serve(path: str) -> Response:
+        assert app.static_folder is not None
         if path != "" and os.path.exists(app.static_folder + "/" + path):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, "index.html")
 
     @app.route("/log")
-    def progress_log():
+    def progress_log() -> Response:
         def generate():
             try:
                 unread_lines = Pygtail(
@@ -209,7 +219,7 @@ def server_factory(console):
         return Response(generate(), mimetype="text/plain")
 
     @app.route("/config")
-    def get_config():
+    def get_config() -> Response:
         try:
             with open(USER_DIR / "config.json", "r") as f:
                 config_data = json.load(f)["config"]
@@ -231,7 +241,7 @@ def server_factory(console):
         return "OK"
 
     @app.route("/text_files", methods=["GET"])
-    def get_text_files():
+    def get_text_files() -> Response:
         files = {}
         for file_name in os.listdir(USER_DIR / "buffers"):
             if file_name.endswith(".py"):
