@@ -1,6 +1,6 @@
 import click
 
-__version__ = "1.0.0.post1"
+__version__ = "1.1.0.post1"
 
 
 def install_web(main: click.Group):
